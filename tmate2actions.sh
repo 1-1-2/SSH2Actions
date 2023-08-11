@@ -79,7 +79,7 @@ print_info(){
     echo "To connect to this session copy and paste the following into a terminal or browser:"
     echo -e "CLI: ${Green_font_prefix}${TMATE_SSH}${Font_color_suffix}"
     echo -e "URL: ${Green_font_prefix}${TMATE_WEB}${Font_color_suffix}"
-    echo -e "TIPS: Run 'touch ${CONTINUE_FILE}' to continue to the next step."
+    echo -e "TIPS: Run 'touch ${CONTINUE_FILE}' to continue to the next step.(ignore in background mode)"
     echo "-----------------------------------------------------------------------------------"
 }
 
@@ -110,6 +110,8 @@ else
     # Write connection info to file
     echo '${INFO} Connection info will be written in /tmp/conn.inf'
     cat > /tmp/conn.inf << EOF
+[$(date +"%c")]
+Tmate session's UP now!
 CLI: ${TMATE_SSH}
 URL: ${TMATE_WEB}
 EOF

@@ -120,7 +120,7 @@ print_info(){
     echo "------------------------------------------------------------------------"
     echo "To connect to this session copy and paste the following into a terminal:"
     echo -e "${Green_font_prefix}$SSH_CMD${Font_color_suffix}"
-    echo -e "TIPS: Run 'touch ${CONTINUE_FILE}' to continue to the next step."
+    echo -e "TIPS: Run 'touch ${CONTINUE_FILE}' to continue to the next step.(ignore in background mode)"
     echo "------------------------------------------------------------------------"
 }
 
@@ -151,7 +151,9 @@ else
     echo '${INFO} Connection info will be written in /tmp/conn.inf'
     # Write connection info to file
     cat > /tmp/conn.inf << EOF
-${SSH_CMD}
+[$(date +"%c")]
+Ngrok tunnel's UP now!
+CLI: ${SSH_CMD}
 EOF
     echo -e "${INFO} Continue to the next step."
     exit 0
