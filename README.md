@@ -11,26 +11,20 @@ This GitHub Action offers you connect to GitHub Actions VM via SSH for interacti
 
 ## Usage
 
-### Connect to Github Actions VM via SSH by using [tmate](https://tmate.io)
-
 ```yaml
-- name: Start SSH via tmate
-  uses: P3TERX/ssh2actions@main
-  # Send connection info to Telegram (optional)
-  # You can find related documents here: https://core.telegram.org/bots
-  env:
-    TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-    TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-```
-
-### Connect to Github Actions VM via SSH by using [ngrok](https://ngrok.com)
-
-```yaml
-- name: Start SSH via ngrok
-  uses: P3TERX/ssh2actions@main
+- name: SSH2action
+  uses: 1-1-2/SSH2Actions@main
   with:
-    mode: ngrok
+    # choose backend [tmate, ngrok] (optional, default 'tmate').
+    mode: tmate
   env:
+    # Enable background mode [false, true] (optional, default 'false').
+    # In foreground mode, action will print connection infomation to log
+    # and hold the step till `touch /tmp/continue`.
+    # In background mode, action will write connection infomation to /tmp/conn.inf
+    # then end the step.
+    IN_BACKGROUND: false
+
     # After sign up on the https://ngrok.com
     # You can find this token here: https://dashboard.ngrok.com/auth/your-authtoken
     NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
@@ -48,6 +42,34 @@ This GitHub Action offers you connect to GitHub Actions VM via SSH for interacti
     TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 ```
 
+## Example
+
+### Connect to Github Actions VM via SSH by using [tmate](https://tmate.io)
+
+```yaml
+- name: Start SSH via tmate
+  uses: 1-1-2/SSH2Actions@main
+```
+
+### Connect to Github Actions VM via SSH by using [ngrok](https://ngrok.com)
+
+```yaml
+- name: Start SSH via ngrok
+  uses: 1-1-2/SSH2Actions@main
+  with:
+    mode: ngrok
+    bg_mode: false
+  env:
+    NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
+    NGROK_REGION: us
+    SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+```
+
 ## Lisence
 
-[MIT](https://github.com/P3TERX/ssh2actions/blob/main/LICENSE) © P3TERX
+[MIT](https://github.com/1-1-2/SSH2Actions/blob/main/LICENSE) © 1-1-2
+
+## Original
+
+Thanks [P3TERX/ssh2actions](https://github.com/P3TERX/ssh2actions)
+

@@ -22,16 +22,19 @@ LOG_FILE='/tmp/ngrok.log'
 TELEGRAM_LOG="/tmp/telegram.log"
 CONTINUE_FILE="/tmp/continue"
 
+# Check secret - ngrok token
 if [[ -z "${NGROK_TOKEN}" ]]; then
     echo -e "${ERROR} Please set 'NGROK_TOKEN' environment variable."
     exit 2
 fi
 
+# Check secret - SSH password
 if [[ -z "${SSH_PASSWORD}" && -z "${SSH_PUBKEY}" && -z "${GH_SSH_PUBKEY}" ]]; then
     echo -e "${ERROR} Please set 'SSH_PASSWORD' environment variable."
     exit 3
 fi
 
+# Install ngrok
 if [[ -n "$(uname | grep -i Linux)" ]]; then
     echo -e "${INFO} Install ngrok ..."
     curl -fsSL https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip -o ngrok.zip
@@ -58,11 +61,13 @@ else
     exit 1
 fi
 
+# Change user pass
 if [[ -n "${SSH_PASSWORD}" ]]; then
     echo -e "${INFO} Set user(${USER}) password ..."
     echo -e "${SSH_PASSWORD}\n${SSH_PASSWORD}" | sudo passwd "${USER}"
 fi
 
+# Start ngrok tcp tunnel to port 22
 echo -e "${INFO} Start ngrok proxy for SSH port..."
 screen -dmS ngrok \
     ngrok tcp 22 \
@@ -70,17 +75,24 @@ screen -dmS ngrok \
     --authtoken "${NGROK_TOKEN}" \
     --region "${NGROK_REGION:-us}"
 
+# Sleep 10
 while ((${SECONDS_LEFT:=10} > 0)); do
     echo -e "${INFO} Please wait ${SECONDS_LEFT}s ..."
     sleep 1
     SECONDS_LEFT=$((${SECONDS_LEFT} - 1))
 done
 
+# Get connection info
 ERRORS_LOG=$(grep "command failed" ${LOG_FILE})
-
 if [[ -e "${LOG_FILE}" && -z "${ERRORS_LOG}" ]]; then
     SSH_CMD="$(grep -oE "tcp://(.+)" ${LOG_FILE} | sed "s/tcp:\/\//ssh ${USER}@/" | sed "s/:/ -p /")"
-    MSG="
+else
+    echo "${ERRORS_LOG}"
+    exit 4
+fi
+
+# Send connection info to Telegram
+MSG="
 *GitHub Actions - ngrok session info:*
 
 ⚡ *CLI:*
@@ -89,20 +101,32 @@ if [[ -e "${LOG_FILE}" && -z "${ERRORS_LOG}" ]]; then
 🔔 *TIPS:*
 Run '\`touch ${CONTINUE_FILE}\`' to continue to the next step.
 "
-    if [[ -n "${TELEGRAM_BOT_TOKEN}" && -n "${TELEGRAM_CHAT_ID}" ]]; then
-        echo -e "${INFO} Sending message to Telegram..."
-        curl -sSX POST "${TELEGRAM_API_URL:-https://api.telegram.org}/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            -d "disable_web_page_preview=true" \
-            -d "parse_mode=Markdown" \
-            -d "chat_id=${TELEGRAM_CHAT_ID}" \
-            -d "text=${MSG}" >${TELEGRAM_LOG}
-        TELEGRAM_STATUS=$(cat ${TELEGRAM_LOG} | jq -r .ok)
-        if [[ ${TELEGRAM_STATUS} != true ]]; then
-            echo -e "${ERROR} Telegram message sending failed: $(cat ${TELEGRAM_LOG})"
-        else
-            echo -e "${INFO} Telegram message sent successfully!"
-        fi
+if [[ -n "${TELEGRAM_BOT_TOKEN}" && -n "${TELEGRAM_CHAT_ID}" ]]; then
+    echo -e "${INFO} Sending message to Telegram..."
+    curl -sSX POST "${TELEGRAM_API_URL:-https://api.telegram.org}/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+        -d "disable_web_page_preview=true" \
+        -d "parse_mode=Markdown" \
+        -d "chat_id=${TELEGRAM_CHAT_ID}" \
+        -d "text=${MSG}" >${TELEGRAM_LOG}
+    TELEGRAM_STATUS=$(cat ${TELEGRAM_LOG} | jq -r .ok)
+    if [[ ${TELEGRAM_STATUS} != true ]]; then
+        echo -e "${ERROR} Telegram message sending failed: $(cat ${TELEGRAM_LOG})"
+    else
+        echo -e "${INFO} Telegram message sent successfully!"
     fi
+fi
+
+print_info(){
+    echo "------------------------------------------------------------------------"
+    echo "To connect to this session copy and paste the following into a terminal:"
+    echo -e "${Green_font_prefix}$SSH_CMD${Font_color_suffix}"
+    echo -e "TIPS: Run 'touch ${CONTINUE_FILE}' to continue to the next step."
+    echo "------------------------------------------------------------------------"
+}
+
+# Keepalive(Foreground) or Background
+if [[ ${IN_BACKGROUND} != true ]]; then
+    # Print connection info
     while ((${PRT_COUNT:=1} <= ${PRT_TOTAL:=10})); do
         SECONDS_LEFT=${PRT_INTERVAL_SEC:=10}
         while ((${PRT_COUNT} > 1)) && ((${SECONDS_LEFT} > 0)); do
@@ -110,24 +134,27 @@ Run '\`touch ${CONTINUE_FILE}\`' to continue to the next step.
             sleep 1
             SECONDS_LEFT=$((${SECONDS_LEFT} - 1))
         done
-        echo "------------------------------------------------------------------------"
-        echo "To connect to this session copy and paste the following into a terminal:"
-        echo -e "${Green_font_prefix}$SSH_CMD${Font_color_suffix}"
-        echo -e "TIPS: Run 'touch ${CONTINUE_FILE}' to continue to the next step."
-        echo "------------------------------------------------------------------------"
+        print_info
         PRT_COUNT=$((${PRT_COUNT} + 1))
     done
-else
-    echo "${ERRORS_LOG}"
-    exit 4
-fi
 
-while [[ -n $(ps aux | grep ngrok) ]]; do
-    sleep 1
-    if [[ -e ${CONTINUE_FILE} ]]; then
-        echo -e "${INFO} Continue to the next step."
-        exit 0
-    fi
-done
+    # Check continue
+    while [[ -n $(pgrep ngrok) ]]; do
+        sleep 1
+        if [[ -e ${CONTINUE_FILE} ]]; then
+            echo -e "${INFO} Continue to the next step."
+            exit 0
+        fi
+    done
+else
+    print_info
+    echo '${INFO} Connection info will be written in /tmp/conn.inf'
+    # Write connection info to file
+    cat > /tmp/conn.inf << EOF
+${SSH_CMD}
+EOF
+    echo -e "${INFO} Continue to the next step."
+    exit 0
+fi
 
 # ref: https://gist.github.com/retyui/7115bb6acf151351a143ec8f96a7c561
