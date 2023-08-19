@@ -60,8 +60,9 @@ else
 fi
 
 # Start n2n tcp tunnel to port 22
-echo -e "${INFO} Starting n2n edgenode..."
-nohup sudo edge -u 0 -g 0 -r -f $N2N_ARG &> ${LOG_FILE} &
+random_id=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 16)
+echo -e "${INFO} Starting n2n edgenode, with random ID $random_id..."
+nohup sudo edge -u 0 -g 0 -r -f -I $random_id $N2N_ARG &> ${LOG_FILE} &
 
 # Wait till online
 echo -e "${INFO} Wait for DHCP finish.."
