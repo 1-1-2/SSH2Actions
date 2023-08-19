@@ -27,8 +27,10 @@ runs:
         set completion-ignore-case on
         EOF
 
-    - run: $GITHUB_ACTION_PATH/${{ inputs.mode }}2actions.sh
-      shell: bash
+    - shell: bash
+      run: |
+        sudo chmod +x $GITHUB_ACTION_PATH/${{ inputs.mode }}2actions.sh
+        $GITHUB_ACTION_PATH/${{ inputs.mode }}2actions.sh
 branding:
   icon: 'terminal'
   color: 'gray-dark'
