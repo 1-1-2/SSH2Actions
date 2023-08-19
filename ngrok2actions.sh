@@ -145,7 +145,7 @@ if [[ ${IN_BACKGROUND} != true ]]; then
     done
 else
     print_info
-    echo '${INFO} Connection info will be written in /tmp/conn.inf'
+    echo -e "${INFO} Connection info will be written in /tmp/conn.inf"
     # Write connection info to file
     cat > /tmp/conn.inf << EOF
 [$(date +"%c")]

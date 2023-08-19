@@ -66,10 +66,11 @@ nohup sudo edge -u 0 -g 0 -r -f -I $random_id $N2N_ARG &> ${LOG_FILE} &
 
 # Wait till online
 echo -e "${INFO} Wait for DHCP finish.."
+echo -e "${INFO} Please allow up to 10s ..."
 while ((${SECONDS_LEFT:=10} > 0)); do
-    grep 'created local tap device IP' ${LOG_FILE} && break
+    grep -q 'created local tap device IP' ${LOG_FILE} && break
 
-    echo -e "${INFO} Please allow up to ${SECONDS_LEFT}s ..."
+    echo -e "${INFO} Please wait ${SECONDS_LEFT}s ..."
     sleep 1
     SECONDS_LEFT=$((${SECONDS_LEFT} - 1))
 done
@@ -141,7 +142,7 @@ if [[ ${IN_BACKGROUND} != true ]]; then
     done
 else
     print_info
-    echo '${INFO} Connection info will be written in /tmp/conn.inf'
+    echo -e "${INFO} Connection info will be written in /tmp/conn.inf"
     # Write connection info to file
     cat > /tmp/conn.inf << EOF
 [$(date +"%c")]

@@ -108,7 +108,7 @@ if [[ ${IN_BACKGROUND} != true ]]; then
 else
     print_info
     # Write connection info to file
-    echo '${INFO} Connection info will be written in /tmp/conn.inf'
+    echo -e "${INFO} Connection info will be written in /tmp/conn.inf"
     cat > /tmp/conn.inf << EOF
 [$(date +"%c")]
 Tmate session's UP now!
