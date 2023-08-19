@@ -28,10 +28,13 @@ if [[ -z "${NGROK_TOKEN}" ]]; then
     exit 2
 fi
 
-# Check secret - SSH password
-if [[ -z "${SSH_PASSWORD}" && -z "${SSH_PUBKEY}" && -z "${GH_SSH_PUBKEY}" ]]; then
+# Change user pass
+if [[ -z "${SSH_PASSWORD}" ]]; then
     echo -e "${ERROR} Please set 'SSH_PASSWORD' environment variable."
     exit 3
+else
+    echo -e "${INFO} Set user(${USER}) password ..."
+    echo -e "${SSH_PASSWORD}\n${SSH_PASSWORD}" | sudo passwd "${USER}"
 fi
 
 # Install ngrok
@@ -59,12 +62,6 @@ elif [[ -n "$(uname | grep -i Darwin)" ]]; then
 else
     echo -e "${ERROR} This system is not supported!"
     exit 1
-fi
-
-# Change user pass
-if [[ -n "${SSH_PASSWORD}" ]]; then
-    echo -e "${INFO} Set user(${USER}) password ..."
-    echo -e "${SSH_PASSWORD}\n${SSH_PASSWORD}" | sudo passwd "${USER}"
 fi
 
 # Start ngrok tcp tunnel to port 22
