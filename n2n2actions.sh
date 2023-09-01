@@ -19,6 +19,7 @@ Font_color_suffix="\033[0m"
 INFO="[${Green_font_prefix}INFO${Font_color_suffix}]"
 ERROR="[${Red_font_prefix}ERROR${Font_color_suffix}]"
 LOG_FILE='/tmp/n2n.log'
+ERR_FILE='/tmp/n2n.err'
 TELEGRAM_LOG="/tmp/telegram.log"
 CONTINUE_FILE="/tmp/continue"
 
@@ -62,7 +63,7 @@ fi
 # Start n2n tcp tunnel to port 22
 random_id=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 16)
 echo -e "${INFO} Starting n2n edgenode, with random ID $random_id..."
-nohup sudo edge -u 0 -g 0 -r -f -I $random_id $N2N_ARG &> ${LOG_FILE} &
+sudo edge -d edge0 -r -I $random_id $N2N_ARG 2>${ERR_FILE} | sed '/supernode/d' | tee ${LOG_FILE}
 
 # Wait till online
 echo -e "${INFO} Wait for DHCP finish.."
@@ -81,7 +82,7 @@ if [[ -n `grep 'created local tap device IP' ${LOG_FILE}` ]]; then
     SSH_CMD="ssh runner@$ipaddress"
 else
     echo -e "${ERROR} Fail initializing n2n edge"
-    cat ${LOG_FILE}
+    cat ${ERR_FILE}
     exit 4
 fi
 
