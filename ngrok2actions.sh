@@ -147,7 +147,7 @@ else
     print_info
     echo -e "${INFO} Connection info will be written in /tmp/conn.inf"
     # Write connection info to file
-    cat > /tmp/conn.inf << EOF
+    cat >> /tmp/conn.inf << EOF
 [$(date +"%c")]
 Ngrok tunnel's UP now!
 CLI: ${SSH_CMD}

@@ -109,7 +109,7 @@ else
     print_info
     # Write connection info to file
     echo -e "${INFO} Connection info will be written in /tmp/conn.inf"
-    cat > /tmp/conn.inf << EOF
+    cat >> /tmp/conn.inf << EOF
 [$(date +"%c")]
 Tmate session's UP now!
 CLI: ${TMATE_SSH}
